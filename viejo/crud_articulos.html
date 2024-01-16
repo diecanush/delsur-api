@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        .tabla-articulos {
+            border-collapse: collapse;
+            width: 100%;
+            border: 2px solid #ddd;
+        }
+
+        .tabla-articulos th, .tabla-articulos td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+
+        .tabla-articulos th {
+            background-color: #f2f2f2;
+        }
+        </style>
+</head>
+<body>
+    <form id="articulo"></form>
+    <div id="datos">NO HAY DATOS</div>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <script>
+
+        mosrtrarFormularioVacio();
+
+        function enviar(){
+            id_articulo = document.getElementById('id_articulo').value;
+            console.log(id_articulo);
+            if (id_articulo != ''){id_articulo = '/'+id_articulo};
+            nombre = document.getElementById('nombre').value;
+            descripcion = document.getElementById('descripcion').value;
+            id_categoria = document.getElementById('id_categoria').value;
+            alert(id_articulo+nombre+descripcion+id_categoria);
+            axios.post(
+                'info.php/articulos'+id_articulo,
+                {
+
+                    nombre,
+                    descripcion,
+                    id_categoria
+
+                }
+            ).then(function (response) {
+                console.log(response.data);
+                console.log(response.status);
+                console.log(response.statusText);
+                console.log(response.headers);
+                console.log(response.config);
+                document.getElementById("articulo").innerHTML=`
+                    <h1>Articulo actualizado correctamente</h1>
+                    <button type="button" onclick="mosrtrarFormularioVacio()">Continuar</button>`;
+                listado();
+
+            });
+        }
+
+        function mosrtrarFormularioVacio(){
+            const camposDeFormulario =`
+
+                        <input id="id_articulo" hidden>
+
+                        <label for="nombre">Nombre:</label>
+                        <input id="nombre">
+                    
+                        <label for="descripcion">Descripcion:</label>
+                        <input id="descripcion">
+
+                        <label for="id_categoria">categoria:</label>
+                        <input id="id_categoria">
+
+                        <button type="button" Enviar onclick="enviar()">Enviar</button>`;
+
+            document.getElementById("articulo").innerHTML=camposDeFormulario;
+            listado();
+
+        }
+
+        function listado(){
+            // Hacer una solicitud AJAX a la URL `info.php/articulos`
+            axios.get("info.php/articulos").then((response) => {
+                datos=response.data;
+                console.log(datos);
+                const tabla = document.createElement('table');
+                tabla.classList.add('tabla-articulos');
+
+                // Crear el thead y agregar los nombres de las columnas
+                const thead = document.createElement('thead');
+                const encabezados = Object.keys(datos[0]); // Suponemos que todos los objetos tienen las mismas propiedades
+                const encabezadosHTML = encabezados.map(encabezado => `<th>${encabezado}</th>`).join('');
+                thead.innerHTML = `<tr>${encabezadosHTML}<th>acciones</th></tr>`;
+                
+                // Crear el tbody y agregar los registros
+                const tbody = document.createElement('tbody');
+                const registrosHTML = datos.map(registro => {
+                    const valores = Object.values(registro);
+                    return `<tr>
+                                ${valores.map(valor => `<td>${valor}</td>`).join('')}
+                                <td>
+                                    <button onclick="editar('${valores[0]}','${valores[1]}','${valores[2]}','${valores[3]}')">editar</button>
+                                    <button onclick="borrar(`+valores[0]+`)">borrar</button>
+                                </td>
+                            </tr>`;
+                }).join('');
+                tbody.innerHTML = registrosHTML;
+
+                // Agregar thead y tbody a la tabla
+                tabla.appendChild(thead);
+                tabla.appendChild(tbody);
+
+                // Agregar la tabla al div con id "datos"
+                const divDatos = document.getElementById('datos');
+                divDatos.innerHTML='';
+                divDatos.appendChild(tabla);
+                
+            });
+        }
+
+        function borrar(id_registro){
+            if (window.confirm(`Está seguro de borrar el registro: ${id_registro}?`)) {
+                console.log ( `info.php/articulos/${id_registro}`)
+                axios.post(
+                    `info.php/articulos/`+id_registro,
+                    {
+                        _method: "DELETE"
+                    }
+  
+                    ).then(function (response) {
+                        console.log(response.data);
+                        console.log(response.status);
+                        console.log(response.statusText);
+                        console.log(response.headers);
+                        console.log(response.config);
+                        document.getElementById("articulo").innerHTML=`
+                            <h1>Articulo borrado</h1>;
+                            <button type="button" onclick="mosrtrarFormularioVacio()">Continuar</button>`;
+                        listado();
+
+                    }
+                );
+            }
+        }
+        
+        function editar(id_articulo,nombre,descripcion,id_categoria){
+            mosrtrarFormularioVacio();
+            console.log('editar'+id_articulo,nombre,descripcion,id_categoria);
+            document.getElementById('id_articulo').value = id_articulo;
+            document.getElementById('nombre').value = nombre;
+            document.getElementById('descripcion').value = descripcion;
+            document.getElementById('id_categoria').value = id_categoria;
+            document.getElementById('nombre').focus();
+        }
+       
+        
+
+    </script>
+</body>
+</html>

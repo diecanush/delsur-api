@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title></title>
+	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+</head>
+<body>
+
+</body>
+
+<script>
+function generarFormularioDesdeJSON(infoTabla) {
+
+  const formulario = document.createElement('form');
+  formulario.id = 'miFormulario';
+  formulario.className = 'container';
+
+  const campos = infoTabla.campos;
+  for (const campo of campos) {
+    const divFormGroup = document.createElement('div');
+    divFormGroup.className = 'form-group row';
+
+    const etiqueta = document.createElement('label');
+    etiqueta.className = 'col-sm-2 col-form-label';
+    etiqueta.textContent = campo.Field;
+    etiqueta.htmlFor = campo.Field;
+
+    const divInput = document.createElement('div');
+    divInput.className = 'col-sm-10';
+
+    
+	
+    // Si el campo es una clave foránea
+    if (campo.foreign_key) {
+      // Realiza una consulta para obtener los valores posibles
+      // Supongamos que la columna con el nombre deseado es 'nombre'
+      
+      const valoresPosibles = obtenerValoresPosibles(campo.foreign_table, 'nombre');
+
+      const select = document.createElement('select');
+      select.className = 'form-control';
+      select.name = campo.Field;
+
+      // Agrega opciones al campo de selección
+      for (const valor of valoresPosibles) {
+        const option = document.createElement('option');
+        option.value = valor;
+        option.textContent = valor;
+        select.appendChild(option);
+      }
+
+      divInput.appendChild(select);
+    } else {
+
+    	const input = document.createElement('input');
+		input.className = 'form-control';
+		input.name = campo.Field;
+
+
+      // Determinar el tipo de entrada según el tipo de campo
+      if (campo.Type.includes('int') || campo.Type.includes('float')) {
+        input.type = 'number';
+      } else if (campo.Type.includes('date')) {
+        input.type = 'date';
+      } else if (campo.Type.includes('datetime') || campo.Type.includes('timestamp')) {
+        input.type = 'datetime-local';
+      } else if (campo.Type.includes('bool')) {
+        // Para campos booleanos, puedes usar radio buttons
+        const radioTrue = document.createElement('input');
+        radioTrue.type = 'radio';
+        radioTrue.value = 'true';
+        radioTrue.name = campo.campo;
+
+        const radioFalse = document.createElement('input');
+        radioFalse.type = 'radio';
+        radioFalse.value = 'false';
+        radioFalse.name = campo.campo;
+
+        divInput.appendChild(radioTrue);
+        divInput.appendChild(radioFalse);
+      } else {
+        input.type = 'text';
+      }
+
+        divInput.appendChild(input);
+    }
+
+
+    divFormGroup.appendChild(etiqueta);
+    divFormGroup.appendChild(divInput);
+    formulario.appendChild(divFormGroup);
+  }
+
+  document.body.appendChild(formulario);
+}
+
+function obtenerValoresPosibles(tabla, columnaNombre) {
+  // Realiza una consulta SQL para obtener los valores de la columna deseada
+  // Devuelve los valores en un array
+  // Esto es un ejemplo simplificado, deberás realizar una consulta real a tu base de datos
+  // Aquí se supone que tienes una función para realizar consultas SQL y obtener los resultados
+  // La consulta podría ser algo como: SELECT nombre FROM tabla
+  const valores = ["Opcion 1", "Opcion 2", "Opcion 3"]; // Simulación de valores
+  return valores;
+}
+
+// Ejemplo de uso
+fetch('http://localhost/delsur/api/infotabla.php')
+	.then(response => response.json())
+	.then(data => {
+		//console.log(data);
+		generarFormularioDesdeJSON(data);
+	});
+
+
+
+</script>
+</html>
+
