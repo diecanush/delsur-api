@@ -8,6 +8,7 @@ function estructura($tabla){
                 COLUMNS.COLUMN_NAME AS nombre,
                 COLUMNS.COLUMN_TYPE AS tipo, 
                 COLUMNS.COLUMN_KEY AS primary_key, 
+                COLUMNS.COLUMN_COMMENT AS comentario,
                 KEY_COLUMN_USAGE.REFERENCED_TABLE_NAME AS tabla_foranea, 
                 KEY_COLUMN_USAGE.REFERENCED_COLUMN_NAME AS campo_foraneo 
             FROM 
@@ -35,7 +36,8 @@ function estructura($tabla){
                 'nombre' => $row['nombre'],
                 'tipo' => $row['tipo'],
                 'primary_key' => (strpos($row['primary_key'], 'PRI') !== false),
-                'foreign_key' => null
+                'foreign_key' => null,
+                'comentario' => $row['comentario'] // Añadir el comentario como caption
             );
 
             // Verificar si es una clave foránea
@@ -54,3 +56,4 @@ function estructura($tabla){
         return json_encode(array("error" => $conexion->error));
     }
 }
+?>
