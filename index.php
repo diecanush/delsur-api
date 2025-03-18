@@ -1,24 +1,25 @@
 <?php
 header("Access-Control-Allow-Origin: *");
-header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
-header("Access-Control-Allow-Headers: Content-Type, Authorization");
-
-
-// router.php
+// Se agregan PUT y DELETE a los métodos permitidos
+header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
+header("Access-Control-Allow-Headers: Content-Type, Authorization, X-HTTP-Method-Override");
 
 include 'config.php';
 
+// Detectar el método HTTP
 $requestMethod = $_SERVER['REQUEST_METHOD'];
-//var_dump ($requestMethod);
-//var_dump($_SERVER);
+// Si se envía POST con el encabezado X-HTTP-Method-Override, se sobrescribe el método
+if ($requestMethod === 'POST' && isset($_SERVER['HTTP_X_HTTP_METHOD_OVERRIDE'])) {
+    $requestMethod = strtoupper($_SERVER['HTTP_X_HTTP_METHOD_OVERRIDE']);
+}
+
 $apiPath = '/api';
 $requestUri = $_SERVER['REQUEST_URI'];
 $apiPosition = strpos($requestUri, $apiPath);
 $request = explode('/', trim(substr($requestUri, $apiPosition + strlen($apiPath)), '/'));
-//var_dump($request);
 
+// Si se solicita la lista de tablas
 if ($request[0] === 'tables') {
-    // Caso especial para obtener el nombre de las tablas
     include 'db_connection.php';
     $result = $conexion->query("SHOW TABLES");
     
@@ -27,23 +28,23 @@ if ($request[0] === 'tables') {
         while ($row = $result->fetch_row()) {
             $tables[] = $row[0];
         }
-        
         echo json_encode($tables);
     } else {
         echo json_encode(array("error" => $conexion->error));
     }
 
-    // Cerrar la conexión a la base de datos
     $conexion->close();
     exit();
 }
 
-if (isset($request[1])){
+if (isset($request[1])) {
     if ($requestMethod === 'GET' && $request[1] === 'table_structure') {
         include 'handlers/table_structure_handler.php';
         echo estructura($request[0]);
+    } elseif ($requestMethod === 'GET' && $request[1] === 'captions') {
+        include 'handlers/captions_handler.php';
+        echo getCaptions($request[0]);
     } else {
-        // Resto del enrutamiento para las otras tablas/endpoints
         switch ($requestMethod) {
             case 'GET':
                 include 'handlers/get_handler.php';
@@ -62,14 +63,20 @@ if (isset($request[1])){
                 break;
         }
     }
-}else{
+} else {
     switch ($requestMethod) {
         case 'GET':
             include 'handlers/get_handler.php';
             break;
     
         case 'POST':
-            include 'handlers/post_handler.php';
+            if ($request[0] === 'upload') {
+                include 'handlers/upload.php';
+                handleFileUpload();
+            } else {
+                include 'handlers/post_handler.php';
+            }
             break;
     }
 }
+?>
